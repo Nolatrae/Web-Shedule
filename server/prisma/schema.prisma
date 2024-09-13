@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int     @id @default(autoincrement())
+  email      String  @unique
+  name       String?
+  middleName String?
+  lastName   String?
+  position   String?
+  department String?
+  password   String
+  role       Role    @default(USER)
+  wishes     Wish[]
+}
+
+model Wish {
+  id         String @id @default(cuid())
+  wishesInfo String
+  userId     Int?
+  user       User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudyPlan {
+  id           String         @id @default(cuid())
+  title        String
+  groups       Group[] // Указание связи с моделью Group
+  disciplines  Discipline[] // Указание связи с моделью Discipline
+  SemesterWeek SemesterWeek[]
+}
+
+model SemesterWeek {
+  id          String    @id @default(cuid())
+  week_1      Int
+  week_2      Int
+  week_3      Int
+  week_4      Int
+  week_5      Int
+  week_6      Int
+  week_7      Int
+  week_8      Int
+  studyPlanId String // ID учебного плана, связанного с этой дисциплиной
+  studyPlan   StudyPlan @relation(fields: [studyPlanId], references: [id])
+}
+
+model Group {
+  id             String     @id @default(cuid())
+  code           String
+  countStudents  Int        @map("count_students")
+  direction      String
+  formEducation  String
+  durationPeriod Int
+  yearEnrollment DateTime   @map("year_enrollment")
+  studyPlanId    String? // ID учебного плана, связанного с этой группой
+  studyPlan      StudyPlan? @relation(fields: [studyPlanId], references: [id])
+
+  @@index([studyPlanId], name: "study_plan_idx") // Индекс для быстрого поиска по внешнему ключу
+}
+
+model Discipline {
+  id                  String    @id @default(cuid())
+  name                String
+  semester            Int // Семестр
+  lecture_hours       Int?
+  el_lecture_hours    Int?
+  laboratory_hours    Int?
+  el_laboratory_hours Int?
+  practice_hours      Int?
+  el_practice_hours   Int?
+  control             String?
+  studyPlanId         String // ID учебного плана, связанного с этой дисциплиной
+  studyPlan           StudyPlan @relation(fields: [studyPlanId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum RoomType {
+  COMPUTER
+  HALL
+  LECTIONSROOM
+}
+
+enum BuildingType {
+  LIBRARY
+  MOGILE_BOX
+  ENGLISH_TOWER
+}
+
+model Room {
+  id           String       @id @default(cuid())
+  typeRoom     RoomType     @default(COMPUTER) @map("type_room")
+  typeBuilding BuildingType @default(LIBRARY) @map("type_building")
+  numberSeats  Int          @default(30) @map("number_seats")
+  equipment    String[]
+}
